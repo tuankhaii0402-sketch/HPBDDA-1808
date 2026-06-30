@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diễm Anh</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<style>
+body {
+  margin: 0;
+  font-family: 'Baloo 2', cursive;
+  background: #0d0d1f;
+  overflow: hidden;
+}
+
+/*particle*/
+body::before {
+  content: "";
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background-image:
+    radial-gradient(white 2px, transparent 2px),
+    radial-gradient(pink 2px, transparent 2px);
+  background-size: 100px 100px, 150px 150px;
+  animation: move 20s linear infinite;
+  opacity: 0.3;
+}
+@keyframes move {
+  from { transform: translateY(0); }
+  to { transform: translateY(100px); }
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* CARD */
+.card {
+  width: 320px;
+  padding: 25px;
+  border-radius: 25px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px);
+  text-align: center;
+  box-shadow: 0 0 40px rgba(255,100,150,0.2);
+}
+
+/* TITLE */
+.title {
+  color: #ff8fb1;
+  font-size: 28px;
+  margin-bottom: 20px;
+  text-shadow: 0 0 15px #ff8fb1;
+}
+
+/* DOT */
+.dots {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.dot {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #aaa;
+  border-radius: 50%;
+  margin: 0 5px;
+}
+.dot.active {
+  background: #ff8fb1;
+  border-color: #ff8fb1;
+}
+
+/* KEYPAD */
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.key {
+  padding: 15px;
+  border-radius: 15px;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.key:active {
+  transform: scale(0.9);
+}
+
+.hint {
+  margin-top: 15px;
+  color: #ccc;
+  font-size: 14px;
+}
+
+/*NÚT YOUTUBE */
+.youtube-btn {
+  position: fixed;
+  bottom: 20px;       
+  left: 20px;         
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.15); 
+  backdrop-filter: blur(10px);
+  padding: 6px 16px 6px 6px; 
+  border-radius: 30px;       
+  z-index: 9999;             
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s;
+  user-select: none;
+}
+
+.youtube-btn:hover {
+  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.youtube-btn .icon-box {
+  width: 40px;
+  height: 40px;
+  background: #ffffff;
+  border-radius: 50%; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(255, 8, 8, 0.4);
+}
+
+.youtube-btn .icon-box i {
+  font-size: 24px;
+  display: inline-block; 
+  animation: custom-spin 2.5s linear infinite; 
+}
+
+.youtube-btn.paused .icon-box i {
+  animation-play-state: paused;
+}
+
+@keyframes custom-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.youtube-btn .btn-text {
+  margin-left: 10px;
+  font-family: 'Baloo 2', cursive;
+  font-size: 15px;
+  color: #ffffff;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  white-space: nowrap; 
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="card">
+    <div class="title">Ngày Ta Chung Đôi</div>
+
+    <div class="dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+
+    <div class="keypad" id="keypad"></div>
+
+    <div class="hint">Gợi ý: Ngày kỷ niệm đấy bé iu của anh ạ</div>
+  </div>
+</div>
+
+<audio id="myAudio" src="DA.mp3.mp3" loop></audio>
+
+<div class="youtube-btn paused" id="music-btn" onclick="toggleMusic()">
+  <div class="icon-box">
+    <i class="fa-brands fa-youtube" style="color: rgb(255, 8, 8);"></i>
+  </div>
+  <span class="btn-text" id="btn-text">Play Music 🎵</span>
+</div>
+
+<script>
+const PASSWORD = "0101"; 
+let input = "";
+
+const keypad = document.getElementById("keypad");
+const dots = document.querySelectorAll(".dot");
+
+// nút
+[1,2,3,4,5,6,7,8,9,"DA",0,"X"].forEach(num => {
+  const btn = document.createElement("div");
+  btn.className = "key";
+  btn.innerText = num;
+  keypad.appendChild(btn);
+  btn.onclick = () => press(num);
+});
+
+function press(num) {
+  if (num === "X") {
+    input = "";
+  } else if (input.length < 4 && num !== "DA" && num !== "X") {
+    input += num;
+  }
+  updateDots();
+  if (input.length === 4) {
+    setTimeout(check, 300);
+  }
+}
+
+function updateDots() {
+  dots.forEach((d,i) => { d.classList.toggle("active", i < input.length); });
+}
+
+function check() {
+  if (input === PASSWORD) {
+    window.location.href = "main.html#play"; 
+  } else {
+    input = "";
+    updateDots();
+    alert("Sai rồi 😢");
+  }
+}
+
+// NHẠC TRANG 1
+const audio = document.getElementById("myAudio");
+const musicBtn = document.getElementById("music-btn");
+const btnText = document.getElementById("btn-text");
+
+function toggleMusic() {
+  if (audio.paused) {
+    audio.play().then(() => {
+      musicBtn.classList.remove("paused");
+      btnText.innerText = "Pause Music ⏸";
+    }).catch(err => { console.log("Trình duyệt chặn: ", err); });
+  } else {
+    audio.pause();
+    musicBtn.classList.add("paused");
+    btnText.innerText = "Play Music 🎵";
+  }
+}
+</script>
+</body>
+</html>

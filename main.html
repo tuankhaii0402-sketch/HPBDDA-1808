@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
+
+<title>Diễm Anh</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Baloo 2', cursive;
+  background: #0d0d1f;
+  overflow-x: hidden;
+  overflow-y: auto;
+  color: white;
+  transition: opacity 0.5s ease;
+}
+
+/* PARTICLE */
+#particles-js {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* CENTER */
+.wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 40px 0;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+/* CARD ĐEN */
+.card {
+  width: 340px;
+  padding: 20px;
+  border-radius: 25px;
+  background: rgba(20,20,40,0.8);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 0 40px rgba(255,100,150,0.2);
+}
+
+/* TITLE */
+.title {
+  font-size: 26px;
+  color: #ff8fb1;
+  text-shadow: 0 0 15px #ff8fb1;
+}
+
+/* WISH */
+.wish {
+  margin-top: 8px;
+  font-size: 16px;
+  color: #ffd1e0;
+}
+
+/* HINT */
+.hint {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #aaa;
+}
+
+/* SCRATCH BOX */
+.scratch-box {
+  margin-top: 15px;
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.scratch-box img {
+  width: 100%;
+  display: block;
+  border-radius: 20px;
+}
+
+/* CANVAS */
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/*NÚT PLAY MUSIC*/
+.youtube-btn {
+  position: fixed;
+  bottom: 20px;       
+  left: 20px;         
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.15); 
+  backdrop-filter: blur(10px);
+  padding: 6px 16px 6px 6px; 
+  border-radius: 30px;       
+  z-index: 9999;             
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s;
+  user-select: none;
+}
+.youtube-btn:hover { transform: scale(1.05); background: rgba(255, 255, 255, 0.25); }
+.youtube-btn .icon-box { width: 40px; height: 40px; background: #ffffff; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 8px rgba(255, 8, 8, 0.4); }
+.youtube-btn .icon-box i { font-size: 24px; display: inline-block; animation: custom-spin 2.5s linear infinite; }
+.youtube-btn.paused .icon-box i { animation-play-state: paused; }
+
+/*NÚT PLANET*/
+.planet-btn {
+  position: fixed;
+  bottom: 20px;       
+  right: 20px;         
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.15); 
+  backdrop-filter: blur(10px);
+  padding: 6px 6px 6px 16px; 
+  border-radius: 30px;       
+  z-index: 9999;             
+  box-shadow: 0 4px 15px rgba(0, 100, 255, 0.3);
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s;
+  user-select: none;
+  box-sizing: border-box;
+}
+.planet-btn:hover { transform: scale(1.05); background: rgba(255, 255, 255, 0.25); }
+.planet-btn .icon-box { width: 40px; height: 40px; background: #ffffff; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 8px rgba(0, 120, 255, 0.4); }
+.planet-btn .icon-box i { font-size: 24px; display: inline-block; animation: custom-spin 4s linear infinite; }
+
+/* CHỮ CỦA NÚT PLANET */
+.planet-btn .btn-text {
+  margin-right: 10px; 
+  font-family: 'Baloo 2', cursive;
+  font-size: 15px;
+  color: #ffffff;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  white-space: nowrap; 
+}
+
+/* Animation xoay */
+@keyframes custom-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.youtube-btn .btn-text {
+  margin-left: 10px;
+  font-family: 'Baloo 2', cursive;
+  font-size: 15px;
+  color: #ffffff;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  white-space: nowrap; 
+}
+</style>
+</head>
+<body>
+
+<div id="particles-js"></div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="title" id="title"></div>
+    <div class="wish" id="wish"></div>
+    <div class="hint">👉 Cào nhẹ tấm thẻ để xem điều bất ngờ...</div>
+    <div class="scratch-box">
+      <img src="embe.jpg.jpg">
+      <canvas id="canvas"></canvas>
+    </div>
+  </div>
+</div>
+
+<audio id="myAudio" src="DA.mp3.mp3" loop></audio>
+
+<div class="youtube-btn paused" id="music-btn" onclick="toggleMusic()">
+  <div class="icon-box">
+    <i class="fa-brands fa-youtube" style="color: rgb(255, 8, 8);"></i>
+  </div>
+  <span class="btn-text" id="btn-text">Play Music 🎵</span>
+</div>
+
+<div class="planet-btn" id="planet-btn" onclick="goToPlanet()">
+  <span class="btn-text">Đến Vũ Trụ 🌍</span>
+  <div class="icon-box">
+    <i class="fa-solid fa-earth-americas" style="color: rgb(0, 140, 255);"></i>
+  </div>
+</div>
+
+
+<script>
+const titleText = "Happy Birthday my Wife❤️"; 
+const wishText = "chúc vợ iu xinh đẹp của chồng có một sinh nhật vui vẻ nha❤️cảm ơn vợ luôn bên cạnh anh,với anh em là niềm vui và là nơi bình yên nhất của anh.Chúc vợ iu của anh ngày càng xinh đẹp, luôn hạnh phúc và cùng anh đi qua nhiều mùa sinh nhật nữa nhé.Anh yêu em rất nhiềuuuuuuu❤️";   
+
+function type(id, text, speed=50) {
+  let i = 0;
+  const el = document.getElementById(id);
+  const t = setInterval(() => { el.innerHTML += text[i]; i++; if (i >= text.length) clearInterval(t); }, speed);
+}
+type("title", titleText);
+type("wish", wishText);
+
+const audio = document.getElementById("myAudio");
+const musicBtn = document.getElementById("music-btn");
+const btnText = document.getElementById("btn-text");
+
+function toggleMusic() {
+  if (audio.paused) {
+    audio.play().then(() => { musicBtn.classList.remove("paused"); btnText.innerText = "Pause Music ⏸"; });
+  } else {
+    audio.pause(); musicBtn.classList.add("paused"); btnText.innerText = "Play Music 🎵";
+  }
+}
+
+//PHÁT NHẠC TRANG 2
+window.addEventListener("DOMContentLoaded", () => {
+  if (window.location.hash === "#play") {
+    audio.play().then(() => {
+      musicBtn.classList.remove("paused");
+      btnText.innerText = "Pause Music ⏸";
+    }).catch(err => {
+      document.body.addEventListener("click", function startOnFirstClick() {
+        audio.play(); musicBtn.classList.remove("paused"); btnText.innerText = "Pause Music ⏸";
+        document.body.removeEventListener("click", startOnFirstClick);
+      }, { once: true });
+    });
+  }
+});
+
+//CHUYỂN TRANG
+function goToPlanet() {
+  document.body.style.opacity = "0"; 
+  setTimeout(() => {
+    window.location.href = "planet.html#interact"; 
+  }, 500);
+}
+
+// LOGIC CÀO THẺ
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d", { willReadFrequently: true });
+const img = document.querySelector(".scratch-box img");
+
+function resizeCanvas() {
+  canvas.width = img.clientWidth || 300; canvas.height = img.clientHeight || 200;
+  ctx.fillStyle = "#ffb6c1"; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = "white"; ctx.font = "20px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("Cào nhẹ ở đây nè ❤", canvas.width/2, canvas.height/2);
+}
+if (img.complete) { resizeCanvas(); } else { img.onload = resizeCanvas; }
+window.addEventListener("resize", resizeCanvas);
+
+let isDrawing = false;
+function getMousePos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: clientX - rect.left, y: clientY - rect.top };
+}
+function scratch(e){
+  if (!isDrawing) return; e.preventDefault(); const pos = getMousePos(e);
+  ctx.globalCompositeOperation = "destination-out"; ctx.beginPath(); ctx.arc(pos.x, pos.y, 25, 0, Math.PI * 2); ctx.fill(); checkScratchPercentage();
+}
+function checkScratchPercentage() {
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); const pixels = imageData.data; let clearedPixels = 0;
+  for (let i = 3; i < pixels.length; i += 4) { if (pixels[i] === 0) clearedPixels++; }
+  const percentage = (clearedPixels / (pixels.length / 4)) * 100;
+  if (percentage >= 70) { canvas.style.transition = "opacity 0.6s ease"; canvas.style.opacity = "0"; setTimeout(() => { ctx.clearRect(0, 0, canvas.width, canvas.height); }, 600); }
+}
+canvas.addEventListener("mousedown", () => isDrawing = true);
+canvas.addEventListener("mouseup", () => isDrawing = false);
+canvas.addEventListener("mousemove", scratch);
+canvas.addEventListener("touchstart", () => isDrawing = true);
+canvas.addEventListener("touchend", () => isDrawing = false);
+canvas.addEventListener("touchmove", scratch);
+
+particlesJS("particles-js", { "particles": { "number": { "value": 50 }, 
+"color": { "value": "#ff8fb1" }, "shape": { "type": "heart" }, "opacity": { "value": 0.5 },
+ "size": { "value": 4 }, "move": { "enable": true, "speed": 2, "direction": "top" } } });
+</script>
+</body>
+</html>

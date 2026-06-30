@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diễm Anh</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background-color: #000; }
+        #webgl-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
+        .instruction {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            z-index: 10;
+            pointer-events: none;
+            font-size: 13px;
+            letter-spacing: 1px;
+            font-family: sans-serif;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head>
+<body>
+
+    <div class="instruction">Tuấn Khải yêu Diễm Anh</div>
+    <div id="webgl-container"></div>
+
+    <script>
+        class SpaceUniverse {
+            constructor(containerId) {
+                this.container = document.getElementById(containerId);
+                
+                this.scene = new THREE.Scene();
+                this.scene.fog = new THREE.FogExp2(0x050515, 0.005);
+
+                this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.camera.position.set(0, 45, 110); 
+
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(window.devicePixelRatio);
+                this.container.appendChild(this.renderer.domElement);
+
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+
+                this.isExploded = false;
+                this.cards = []; 
+
+                this.initLights();
+                this.initCenterPlanet(); 
+                this.initStarField();    
+                this.initShootingStars(); 
+                this.initDensePhotoRing();
+
+                this.bindEvents();
+                this.animate();
+            }
+
+            initLights() {
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+                this.scene.add(ambientLight);
+                const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+                dirLight.position.set(20, 40, 20);
+                this.scene.add(dirLight);
+            }
+
+            //TẠO TRÁI ĐẤT
+            initCenterPlanet() {
+                const geometry = new THREE.SphereGeometry(12, 64, 64);
+                const textureLoader = new THREE.TextureLoader();
+                const earthTexture = textureLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg');
+                
+                const material = new THREE.MeshStandardMaterial({
+                    map: earthTexture,
+                    roughness: 0.6,
+                    metalness: 0.1,
+                });
+                
+                this.planet = new THREE.Mesh(geometry, material);
+                this.planet.rotation.z = 0.41; // Độ nghiêng trục Trái Đất
+                this.scene.add(this.planet);
+            }
+
+            //TẠO BẦU TRỜI NGÔI SAO DÀY ĐẶC
+            initStarField() {
+                const starsGeometry = new THREE.BufferGeometry();
+                const count = 15000; 
+                const positions = new Float32Array(count * 3);
+
+                for (let i = 0; i < count * 3; i++) {
+                    positions[i] = (Math.random() - 0.5) * 700;
+                }
+                starsGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                
+                const starsMaterial = new THREE.PointsMaterial({ 
+                    color: 0xffffff, 
+                    size: 0.35,
+                    transparent: true,
+                    opacity: 0.9,
+                    blending: THREE.AdditiveBlending
+                });
+                
+                this.starField = new THREE.Points(starsGeometry, starsMaterial);
+                this.scene.add(this.starField);
+            }
+
+            //TẠO HỆ THỐNG SAO BĂNG
+            initShootingStars() {
+                this.shootingStars = [];
+                this.maxShootingStars = 7;
+
+                for (let i = 0; i < this.maxShootingStars; i++) {
+                    const geometry = new THREE.BufferGeometry();
+                    const positions = new Float32Array(2 * 3); 
+                    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+                    const material = new THREE.LineBasicMaterial({
+                        color: 0xffffff,
+                        transparent: true,
+                        opacity: 0
+                    });
+
+                    const star = new THREE.Line(geometry, material);
+                    this.resetShootingStar(star);
+                    this.scene.add(star);
+                    this.shootingStars.push(star);
+                }
+            }
+
+            resetShootingStar(star) {
+                star.position.set((Math.random() - 0.5) * 400, 100 + Math.random() * 50, (Math.random() - 0.5) * 400);
+                star.userData = {
+                    vx: -2.0 - Math.random() * 2.0,
+                    vy: -1.5 - Math.random() * 1.5,
+                    vz: (Math.random() - 0.5) * 1.0,
+                    length: 8 + Math.random() * 7,
+                    life: 0,
+                    maxLife: 40 + Math.floor(Math.random() * 40),
+                    active: Math.random() > 0.5
+                };
+                star.material.opacity = 0;
+            }
+
+            // ẢNH LẶP
+            initDensePhotoRing() {
+                const textureLoader = new THREE.TextureLoader();
+                const baseRadius = 38; 
+
+                //THAY LINK ẢNH
+                const myImageLinks = [
+                   'DiemAnh/1.jpg.jpg',  'DiemAnh/10.jpg.jpg',  'DiemAnh/19.jpg.jpg',  'DiemAnh/28.jpg.jpg',  'DiemAnh/37.jpg.jpg',
+                   'DiemAnh/2.jpg.jpg',  'DiemAnh/11.jpg.jpg',  'DiemAnh/20.jpg.jpg',  'DiemAnh/29.jpg.jpg',  'DiemAnh/38.jpg.jpg',
+                   'DiemAnh/3.jpg.jpg',  'DiemAnh/12.jpg.jpg',  'DiemAnh/21.jpg.jpg',  'DiemAnh/30.jpg.jpg',
+                   'DiemAnh/4.jpg.jpg',  'DiemAnh/13.jpg.jpg',  'DiemAnh/22.jpg.jpg',  'DiemAnh/31.jpg.jpg',
+                   'DiemAnh/5.jpg.jpg',  'DiemAnh/14.jpg.jpg',  'DiemAnh/23.jpg.jpg',  'DiemAnh/32.jpg.jpg',
+                   'DiemAnh/6.jpg.jpg',  'DiemAnh/15.jpg.jpg',  'DiemAnh/24.jpg.jpg',  'DiemAnh/33.jpg.jpg',
+                   'DiemAnh/7.jpg.jpg',  'DiemAnh/16.jpg.jpg',  'DiemAnh/25.jpg.jpg',  'DiemAnh/34.jpg.jpg',
+                   'DiemAnh/8.jpg.jpg',  'DiemAnh/17.jpg.jpg',  'DiemAnh/26.jpg.jpg',  'DiemAnh/35.jpg.jpg',  
+                   'DiemAnh/9.jpg.jpg',  'DiemAnh/18.jpg.jpg',  'DiemAnh/27.jpg.jpg',  'DiemAnh/36.jpg.jpg',
+                ];
+
+              /*vòng lặp ảnh*/
+                this.totalPhotosCount = 90; 
+
+                for (let i = 0; i < this.totalPhotosCount; i++) {
+                    const imageIndex = i % myImageLinks.length;
+                    const myImageUrl = myImageLinks[imageIndex]; 
+                    
+                    const texture = textureLoader.load(myImageUrl);
+                    const geometry = new THREE.PlaneGeometry(3.5, 3.5); 
+                    const material = new THREE.MeshBasicMaterial({
+                        map: texture,
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: 0 
+                    });
+                    
+                    const card = new THREE.Mesh(geometry, material);
+                    card.position.set(0, 0, 0);
+
+                    const angle = (i / this.totalPhotosCount) * Math.PI * 2;
+                    const customRadius = baseRadius + (Math.random() - 0.5) * 12; 
+                    const randomHeight = (Math.random() - 0.5) * 10;
+
+                    card.userData = {
+                        angle: angle,
+                        radius: customRadius,
+                        speed: 0.002, 
+                        targetY: randomHeight 
+                    };
+
+                    this.scene.add(card);
+                    this.cards.push(card);
+                }
+            }
+
+            //nhấn vào Trái Đất kích hoạt hiệu ứng bung mở
+            onPlanetClick(event) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const mouse = new THREE.Vector2();
+             const raycaster = new THREE.Raycaster();
+
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, this.camera);
+                const intersects = raycaster.intersectObject(this.planet);
+
+                if (intersects.length > 0 && !this.isExploded) {
+                    this.isExploded = true;
+
+                    gsap.to(this.camera.position, {
+                        x: 0, y: 30, z: 85,
+                        duration: 2.5,
+                        ease: "power2.out",
+                        onUpdate: () => this.controls.update()
+                    });
+
+                    this.cards.forEach((card, index) => {
+                        gsap.to(card.material, { 
+                            opacity: 1, 
+                            duration: 1, 
+                            delay: (index % 15) * 0.015
+                        });
+
+                        const targetX = Math.cos(card.userData.angle) * card.userData.radius;
+                        const targetZ = Math.sin(card.userData.angle) * card.userData.radius;
+
+                        gsap.to(card.position, {
+                            x: targetX,
+                            y: card.userData.targetY,
+                            z: targetZ,
+                            duration: 2.5,
+                            ease: "back.out(1.0)",
+                            delay: (index % 15) * 0.015
+                        });
+                    });
+                }
+            }
+
+            bindEvents() {
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+                window.addEventListener('click', (e) => this.onPlanetClick(e));
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                this.controls.update();
+
+                if (this.planet) this.planet.rotation.y += 0.0015;
+                if (this.starField) this.starField.rotation.y += 0.0001;
+
+                if (this.shootingStars) {
+                    this.shootingStars.forEach(star => {
+                        const data = star.userData;
+                        if (!data.active) {
+                            if (Math.random() < 0.005) data.active = true;
+                            return;
+                        }
+                        star.position.x += data.vx;
+                        star.position.y += data.vy;
+                        star.position.z += data.vz;
+
+                        const positions = star.geometry.attributes.position.array;
+                        positions[0] = 0; positions[1] = 0; positions[2] = 0;
+                        positions[3] = -data.vx * data.length;
+                        positions[4] = -data.vy * data.length;
+                        positions[5] = -data.vz * data.length;
+                        star.geometry.attributes.position.needsUpdate = true;
+
+                        data.life++;
+                        if (data.life < 15) {
+                            star.material.opacity = data.life / 15;
+                        } else if (data.life > data.maxLife - 15) {
+                            star.material.opacity = (data.maxLife - data.life) / 15;
+                        } else {
+                            star.material.opacity = 1;
+                        }
+
+                        if (data.life >= data.maxLife || star.position.y < -50) {
+                            this.resetShootingStar(star);
+                        }
+                    });
+                }
+                if (this.isExploded) {
+                    this.cards.forEach(card => {
+                        card.userData.angle += card.userData.speed; 
+                        card.position.x = Math.cos(card.userData.angle) * card.userData.radius;
+                        card.position.z = Math.sin(card.userData.angle) * card.userData.radius;
+                        card.lookAt(this.camera.position); // Ép mặt ảnh luôn nhìn về phía người xem
+                    });
+                }
+
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            new SpaceUniverse('webgl-container');
+        });
+
+     
+window.addEventListener("DOMContentLoaded", () => {
+  if (window.location.hash === "#interact") {
+    const fakeEvent = () => {
+      console.log("Kích hoạt hệ thống thành công!");
+      document.body.removeEventListener("mouseover", fakeEvent);
+      document.body.removeEventListener("touchstart", fakeEvent);
+    };
+    document.body.addEventListener("mouseover", fakeEvent);
+    document.body.addEventListener("touchstart", fakeEvent);
+    setTimeout(() => {
+      history.replaceState("", document.title, window.location.pathname + window.location.search);
+    }, 100);
+  }
+});
+    </script>
+</body>
+</html>   
