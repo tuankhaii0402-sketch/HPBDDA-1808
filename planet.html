@@ -208,13 +208,12 @@
 
                 const mouse = new THREE.Vector2();
              const raycaster = new THREE.Raycaster();
-
+                const rect = this.renderer.domElement.getBoundingClientRect();
                 mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
                 mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
                 raycaster.setFromCamera(mouse, this.camera);
                 const intersects = raycaster.intersectObject(this.planet);
-
                 if (intersects.length > 0 && !this.isExploded) {
                     this.isExploded = true;
 
@@ -311,22 +310,6 @@
         window.addEventListener('DOMContentLoaded', () => {
             new SpaceUniverse('webgl-container');
         });
-
-     
-window.addEventListener("DOMContentLoaded", () => {
-  if (window.location.hash === "#interact") {
-    const fakeEvent = () => {
-      console.log("Kích hoạt hệ thống thành công!");
-      document.body.removeEventListener("mouseover", fakeEvent);
-      document.body.removeEventListener("touchstart", fakeEvent);
-    };
-    document.body.addEventListener("mouseover", fakeEvent);
-    document.body.addEventListener("touchstart", fakeEvent);
-    setTimeout(() => {
-      history.replaceState("", document.title, window.location.pathname + window.location.search);
-    }, 100);
-  }
-});
     </script>
 </body>
 </html>   
